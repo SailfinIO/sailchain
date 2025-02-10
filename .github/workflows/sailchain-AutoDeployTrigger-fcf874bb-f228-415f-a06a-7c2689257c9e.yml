@@ -4,19 +4,18 @@ name: Trigger auto deployment for sailchain
 on:
   # Automatically trigger it when detected changes in repo
   push:
-    branches: 
-      [ main ]
+    branches: [main]
     paths:
-    - '**'
-    - '.github/workflows/sailchain-AutoDeployTrigger-fcf874bb-f228-415f-a06a-7c2689257c9e.yml'
+      - '**'
+      - '.github/workflows/sailchain-AutoDeployTrigger-fcf874bb-f228-415f-a06a-7c2689257c9e.yml'
 
-  # Allow manual trigger 
-  workflow_dispatch:      
+  # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    permissions: 
+    permissions:
       id-token: write #This is required for requesting the OIDC JWT Token
       contents: read #Required when GH token is used to authenticate with private repo
 
@@ -35,14 +34,10 @@ jobs:
         uses: azure/container-apps-deploy-action@v2
         with:
           appSourcePath: ${{ github.workspace }}
-          _dockerfilePathKey_: _dockerfilePath_
-          registryUrl: 
-          registryUsername: ${{ secrets.SAILCHAIN_REGISTRY_USERNAME }}
-          registryPassword: ${{ secrets.SAILCHAIN_REGISTRY_PASSWORD }}
+          dockerfilePath: Dockerfile # Assuming your Dockerfile is at the repo root
+          registryUrl: sailchain.azurecr.io
+          registryUsername: ${{ secrets.ACR_USERNAME }} # Update secret name as needed
+          registryPassword: ${{ secrets.ACR_PASSWORD }} # Update secret name as needed
           containerAppName: sailchain
           resourceGroup: DefaultResourceGroup-EUS
-          imageToBuild: default/[parameters('containerAppName')]:${{ github.sha }}
-          _buildArgumentsKey_: |
-            _buildArgumentsValues_
-
-
+          imageToBuild: sailchain.azurecr.io/sailchain:${{ github.sha }}
