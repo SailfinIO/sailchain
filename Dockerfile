@@ -3,8 +3,8 @@
 # ============================
 FROM node:20-alpine AS builder
 
-# Set working directory
-WORKDIR /appgst
+# Set working directory (changed to /app)
+WORKDIR /app
 
 # Copy package files first to leverage Docker cache for dependency installation
 COPY package*.json ./
@@ -32,7 +32,7 @@ COPY package*.json ./
 # Install only production dependencies
 RUN npm install --only=production
 
-# Copy the built application from the builder stage
+# Copy the built application from the builder stage (now it matches /app/dist)
 COPY --from=builder /app/dist ./dist
 
 # Set environment variable to production
