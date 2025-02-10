@@ -1,6 +1,6 @@
 // src/modules/blockchain/schemas/block.schema.ts
 import mongoose, { Document, Schema } from 'mongoose';
-import { Transaction } from '../classes/Transaction';
+import { Transaction } from '../Transaction';
 import { TransactionSchema } from './transaction.schema';
 
 export const BlockSchema = new Schema({

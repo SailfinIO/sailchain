@@ -3,7 +3,7 @@ import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TransactionPoolService } from './transaction-pool.service';
-import { Transaction } from './classes/Transaction';
+import { Transaction } from './Transaction';
 import { TransactionDto } from './dto/transaction.dto';
 import { WalletService } from '../wallet/wallet.service';
 import { TransactionService } from './transaction.service';

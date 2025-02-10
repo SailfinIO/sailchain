@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TransactionDocument } from './schemas/transaction.schema';
-import { Transaction } from './classes/Transaction';
+import { Transaction } from './Transaction';
 
 @Injectable()
 export class TransactionService {

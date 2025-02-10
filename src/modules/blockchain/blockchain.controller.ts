@@ -5,7 +5,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BlockchainService } from './blockchain.service';
 import { CreateBlockDto } from './dto/create-block.dto';
 import { BlockDto } from './dto/block.dto';
-import { Transaction } from './classes/Transaction';
+import { Transaction } from './Transaction';
 import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Blockchain')

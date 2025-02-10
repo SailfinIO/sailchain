@@ -1,7 +1,7 @@
 // src/modules/blockchain/transaction-pool.service.ts
 
 import { Injectable, Logger } from '@nestjs/common';
-import { Transaction } from './classes/Transaction';
+import { Transaction } from './Transaction';
 
 @Injectable()
 export class TransactionPoolService {

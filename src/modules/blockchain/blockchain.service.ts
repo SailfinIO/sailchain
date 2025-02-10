@@ -1,11 +1,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { Blockchain } from './classes/Blockchain';
-import { Block } from './classes/Block';
+import { Blockchain } from './BlockChain';
+import { Block } from './Block';
 import { NodesService } from '../nodes/nodes.service';
 import { BlockDto } from './dto/block.dto';
-import { Transaction } from './classes/Transaction';
+import { Transaction } from './Transaction';
 import { TransactionPoolService } from './transaction-pool.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
