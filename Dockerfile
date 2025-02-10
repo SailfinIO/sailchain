@@ -4,7 +4,7 @@
 FROM node:20-alpine AS builder
 
 # Set working directory
-WORKDIR /app
+WORKDIR /appgst
 
 # Copy package files first to leverage Docker cache for dependency installation
 COPY package*.json ./
@@ -39,7 +39,7 @@ COPY --from=builder /app/dist ./dist
 ENV NODE_ENV=production
 
 # Expose the port the application listens on
-EXPOSE 8080
+EXPOSE 80
 
 # Start the application
 CMD ["node", "dist/main"]
