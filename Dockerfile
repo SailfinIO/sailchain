@@ -38,8 +38,8 @@ COPY --from=builder /app/dist ./dist
 # Set environment variable to production
 ENV NODE_ENV=production
 
-# Expose the port your application listens on (default is 3000 for NestJS)
-EXPOSE 3000
+# Expose the port the application listens on
+EXPOSE 8080
 
 # Start the application
 CMD ["node", "dist/main"]
