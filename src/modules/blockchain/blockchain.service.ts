@@ -17,19 +17,11 @@ import { ConfigService } from '../config/config.service';
 @Injectable()
 export class BlockchainService implements OnModuleInit {
   private readonly logger = new Logger(BlockchainService.name);
-
-  // A few configurable properties:
-  // Starting coinbase reward (e.g., like Bitcoin’s 50 coins)
   private readonly initialCoinbaseReward: number = 50;
-  // The reward will be halved every X blocks (e.g., 210000 as in Bitcoin)
   private readonly blockRewardHalvingInterval: number = 210000;
-  // Maximum coins that can ever exist (if you wish to enforce a cap)
   private readonly maxCoins: number = 21000000;
-  // Every N blocks, we adjust difficulty using the average block time of the last N blocks.
   private readonly difficultyAdjustmentInterval: number = 10;
-  // The target block time (in milliseconds); for example, 60000ms = 60 seconds.
   private readonly targetBlockTime: number = 60000;
-
   private blockchain: Blockchain<Transaction[]>;
 
   constructor(
@@ -41,14 +33,13 @@ export class BlockchainService implements OnModuleInit {
     private readonly configService: ConfigService,
     @InjectModel('Block') private readonly blockModel: Model<BlockDocument>,
   ) {
-    // Retrieve the genesis wallet address and initial coinbase reward from config.
     const genesisWalletAddress =
       this.configService.appConfig.genesisWalletAddress;
     const initialCoinbaseReward =
-      this.configService.appConfig.initialCoinbaseReward || 50; // Use a default value if not set.
+      this.configService.appConfig.initialCoinbaseReward || 50;
 
     this.initialCoinbaseReward = initialCoinbaseReward;
-    // Create the blockchain instance with the genesis wallet and initial coinbase reward.
+
     this.blockchain = new Blockchain<Transaction[]>(
       genesisWalletAddress,
       initialCoinbaseReward,
@@ -63,10 +54,15 @@ export class BlockchainService implements OnModuleInit {
       .exec();
     if (persistedBlocks.length) {
       this.blockchain.chain = persistedBlocks.map((doc) => {
+        // Convert each transaction plain object into a Transaction instance.
+        const transactions = doc.transactions.map(
+          (tx: any) => new Transaction(tx.sender, tx.recipient, tx.amount),
+        );
+
         return new Block<Transaction[]>(
           doc.index,
           doc.timestamp,
-          doc.transactions,
+          transactions,
           doc.previousHash,
           doc.difficulty,
         );
@@ -140,7 +136,7 @@ export class BlockchainService implements OnModuleInit {
     if (chain) {
       return this.validateChain(chain);
     }
-    return this.blockchain.isChainValid();
+    return this.blockchain.isValid();
   }
 
   /**
@@ -151,21 +147,16 @@ export class BlockchainService implements OnModuleInit {
       const currentBlock = chain[i];
       const previousBlock = chain[i - 1];
 
-      // Recalculate the hash.
-      const recalculatedHash = new Block<Transaction[]>(
-        currentBlock.index,
-        currentBlock.timestamp,
-        currentBlock.transactions,
-        currentBlock.previousHash,
-        currentBlock.difficulty,
-      ).calculateHash();
-
-      if (currentBlock.hash !== recalculatedHash) {
-        this.logger.error(`Block ${i} has an invalid hash.`);
+      if (!currentBlock.isValid()) {
+        this.logger.error(
+          `Block ${currentBlock.index} failed its internal validity check.`,
+        );
         return false;
       }
       if (currentBlock.previousHash !== previousBlock.hash) {
-        this.logger.error(`Block ${i} has an invalid previous hash.`);
+        this.logger.error(
+          `Block ${currentBlock.index} has an invalid previous hash.`,
+        );
         return false;
       }
     }
@@ -175,44 +166,25 @@ export class BlockchainService implements OnModuleInit {
   async receiveBlock(
     blockDto: BlockDto,
   ): Promise<{ success: boolean; message?: string }> {
-    const latestBlock = this.blockchain.getLatestBlock();
-
-    if (blockDto.index !== latestBlock.index + 1) {
-      this.logger.error('Received block index is not sequential.');
-      return { success: false, message: 'Block index is not sequential.' };
-    }
-
-    if (blockDto.previousHash !== latestBlock.hash) {
-      this.logger.error('Received block previous hash does not match.');
-      return { success: false, message: 'Previous hash mismatch.' };
-    }
-
     const transactions = blockDto.data.map(
       (txDto) => new Transaction(txDto.sender, txDto.recipient, txDto.amount),
     );
-    const recalculatedHash = new Block<Transaction[]>(
+    const receivedBlock = new Block<Transaction[]>(
       blockDto.index,
       blockDto.timestamp,
       transactions,
       blockDto.previousHash,
       blockDto.difficulty,
-    ).calculateHash();
+    );
 
-    if (recalculatedHash !== blockDto.hash) {
-      this.logger.error('Invalid block hash.');
-      return { success: false, message: 'Invalid block hash.' };
+    // Validate the block before adding it to the chain
+    if (!receivedBlock.isValid()) {
+      this.logger.error(`Received block ${blockDto.index} failed validation.`);
+      return { success: false, message: 'Invalid block.' };
     }
 
-    // Add the block if all validations pass.
-    this.blockchain.chain.push(
-      new Block<Transaction[]>(
-        blockDto.index,
-        blockDto.timestamp,
-        transactions,
-        blockDto.previousHash,
-        blockDto.difficulty,
-      ),
-    );
+    // Additional checks like index sequencing and previous hash matching can follow here
+    this.blockchain.chain.push(receivedBlock);
     this.logger.log(`Block received and added: ${blockDto.hash}`);
     return { success: true };
   }
@@ -245,7 +217,7 @@ export class BlockchainService implements OnModuleInit {
     // Calculate the coinbase reward based on the block height (halving every blockRewardHalvingInterval blocks).
     let reward = this.getBlockReward(currentBlockHeight);
 
-    // (Optional) Ensure that total coins never exceed maxCoins.
+    // Ensure that total coins never exceed maxCoins.
     const totalCoinsMinted = this.calculateTotalCoins();
     if (totalCoinsMinted + reward > this.maxCoins) {
       reward = Math.max(0, this.maxCoins - totalCoinsMinted);
@@ -291,17 +263,13 @@ export class BlockchainService implements OnModuleInit {
    */
   private adjustDifficulty(): number {
     const chain = this.blockchain.chain;
-
-    // Only adjust if we have reached the interval.
     if (chain.length < this.difficultyAdjustmentInterval + 1) {
       return this.blockchain.difficulty;
     }
-
     if ((chain.length - 1) % this.difficultyAdjustmentInterval !== 0) {
       return this.blockchain.difficulty;
     }
 
-    // Calculate the total time taken to mine the last interval of blocks.
     const startIndex = chain.length - 1 - this.difficultyAdjustmentInterval;
     const timeTaken =
       chain[chain.length - 1].timestamp - chain[startIndex].timestamp;
@@ -309,10 +277,12 @@ export class BlockchainService implements OnModuleInit {
       this.targetBlockTime * this.difficultyAdjustmentInterval;
 
     let newDifficulty = this.blockchain.difficulty;
-    if (timeTaken < expectedTime / 2) {
+    // Using a ratio to adjust
+    const adjustmentFactor = expectedTime / timeTaken;
+    if (adjustmentFactor > 1.1) {
       newDifficulty++;
       this.logger.log(`Increasing difficulty to ${newDifficulty}`);
-    } else if (timeTaken > expectedTime * 2 && newDifficulty > 1) {
+    } else if (adjustmentFactor < 0.9 && newDifficulty > 1) {
       newDifficulty--;
       this.logger.log(`Decreasing difficulty to ${newDifficulty}`);
     } else {

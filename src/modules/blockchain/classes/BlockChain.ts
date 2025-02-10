@@ -9,6 +9,7 @@ export class Blockchain<T extends Transaction[]> {
 
   /**
    * Initializes the blockchain with a genesis block.
+   * @param genesisWalletAddress The address to receive the coinbase reward.
    * @param initialReward The coinbase reward to seed the genesis block.
    * @param difficulty The number of leading zeros required for mining.
    */
@@ -44,7 +45,7 @@ export class Blockchain<T extends Transaction[]> {
     return new Block<T>(
       0, // index
       Date.now(), // timestamp
-      transactions as T,
+      transactions,
       '0', // previous hash
       difficulty,
     );
@@ -67,7 +68,7 @@ export class Blockchain<T extends Transaction[]> {
   /**
    * Validates the blockchain’s integrity.
    */
-  public isChainValid(): boolean {
+  public isValid(): boolean {
     for (let i = 1; i < this.chain.length; i++) {
       const currentBlock = this.chain[i];
       const previousBlock = this.chain[i - 1];
