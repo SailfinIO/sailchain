@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Sailchain API",
   "author": "michael@sailfin.io",
-  "private": true,
+  "private": false,
   "license": "MIT",
   "scripts": {
     "build": "nest build",
