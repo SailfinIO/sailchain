@@ -6,6 +6,7 @@ import { BlockchainService } from './blockchain.service';
 import { CreateBlockDto } from './dto/create-block.dto';
 import { BlockDto } from './dto/block.dto';
 import { Transaction } from './classes/Transaction';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Blockchain')
 @Controller('blockchain')
@@ -14,7 +15,11 @@ export class BlockchainController {
 
   /**
    * Retrieve the full blockchain.
+   * Allow up to 20 requests per minute.
    */
+  @Throttle({
+    default: { limit: 20, ttl: 60 },
+  })
   @Get()
   @ApiOperation({ summary: 'Retrieve the full blockchain' })
   @ApiResponse({
@@ -29,6 +34,9 @@ export class BlockchainController {
   /**
    * Retrieve the latest block in the blockchain.
    */
+  @Throttle({
+    default: { limit: 20, ttl: 60 },
+  })
   @Get('latest')
   @ApiOperation({ summary: 'Retrieve the latest block' })
   @ApiResponse({
@@ -40,6 +48,13 @@ export class BlockchainController {
     return this.blockchainService.getLatestBlock();
   }
 
+  /**
+   * Add a new block to the blockchain.
+   * Since this modifies state, allow only 5 requests per minute.
+   */
+  @Throttle({
+    default: { limit: 5, ttl: 60 },
+  })
   @Post()
   @ApiOperation({ summary: 'Add a new block to the blockchain' })
   @ApiResponse({
@@ -48,7 +63,6 @@ export class BlockchainController {
     type: BlockDto,
   })
   addBlock(@Body() createBlockDto: CreateBlockDto) {
-    // Convert TransactionDto[] to Transaction[]
     const transactions = createBlockDto.data.map(
       (txDto) => new Transaction(txDto.sender, txDto.recipient, txDto.amount),
     );
@@ -58,6 +72,9 @@ export class BlockchainController {
   /**
    * Validate the blockchain integrity.
    */
+  @Throttle({
+    default: { limit: 20, ttl: 60 },
+  })
   @Get('validate')
   @ApiOperation({ summary: 'Validate the blockchain integrity' })
   @ApiResponse({
@@ -69,8 +86,11 @@ export class BlockchainController {
   }
 
   /**
-   * Endpoint to receive a new block from a peer node.
+   * Receive a new block from a peer node.
    */
+  @Throttle({
+    default: { limit: 5, ttl: 60 },
+  })
   @Post('receive')
   @ApiOperation({ summary: 'Receive a new block from a peer node' })
   @ApiResponse({

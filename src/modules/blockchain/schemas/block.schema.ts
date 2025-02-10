@@ -10,6 +10,7 @@ export const BlockSchema = new Schema({
   previousHash: { type: String, required: true },
   hash: { type: String, required: true },
   nonce: { type: Number, required: true },
+  difficulty: { type: Number, required: true }, // NEW: Store difficulty with each block
 });
 
 // Define an interface for the Block document
@@ -20,4 +21,5 @@ export interface BlockDocument extends Document {
   previousHash: string;
   hash: string;
   nonce: number;
+  difficulty: number; // NEW: Include difficulty in the interface
 }

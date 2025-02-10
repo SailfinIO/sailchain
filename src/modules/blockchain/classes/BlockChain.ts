@@ -1,8 +1,5 @@
-// src/modules/blockchain/classes/BlockChain.ts
-
 import { Logger } from '@nestjs/common';
 import { Block } from './Block';
-
 import { Transaction } from './Transaction';
 
 export class Blockchain<T extends Transaction[]> {
@@ -12,40 +9,63 @@ export class Blockchain<T extends Transaction[]> {
 
   /**
    * Initializes the blockchain with a genesis block.
-   * @param difficulty The number of leading zeros required for mining (default is 2).
+   * @param initialReward The coinbase reward to seed the genesis block.
+   * @param difficulty The number of leading zeros required for mining.
    */
-  constructor(difficulty = 2) {
-    this.chain = [this.createGenesisBlock()];
+  constructor(
+    genesisWalletAddress: string,
+    initialCoinbaseReward: number,
+    difficulty = 2,
+  ) {
+    this.chain = [
+      this.createGenesisBlock(
+        genesisWalletAddress,
+        initialCoinbaseReward,
+        difficulty,
+      ),
+    ];
     this.difficulty = difficulty;
   }
 
   /**
-   * Creates the genesis (first) block in the blockchain.
+   * Creates the genesis block. Here, we include a coinbase transaction to seed the network.
    */
-  private createGenesisBlock(): Block<T> {
-    // If T extends Transaction[], then initialize with an empty array.
-    return new Block<T>(0, Date.now(), [] as T, '0');
+  private createGenesisBlock(
+    genesisWalletAddress: string,
+    initialReward: number,
+    difficulty: number,
+  ): Block<T> {
+    const coinbaseTx = new Transaction(
+      'SYSTEM',
+      genesisWalletAddress,
+      initialReward,
+    );
+    const transactions: Transaction[] = [coinbaseTx];
+    return new Block<T>(
+      0, // index
+      Date.now(), // timestamp
+      transactions as T,
+      '0', // previous hash
+      difficulty,
+    );
   }
-  /**
-   * Returns the latest block in the chain.
-   */
+
   public getLatestBlock(): Block<T> {
     return this.chain[this.chain.length - 1];
   }
 
   /**
-   * Adds a new block to the chain after setting its previous hash and mining it.
-   * @param newBlock The block to be added.
+   * Mines and adds a new block to the chain.
    */
   public async addBlock(newBlock: Block<T>): Promise<void> {
     newBlock.previousHash = this.getLatestBlock().hash;
-    await newBlock.mineBlock(this.difficulty);
+    newBlock.difficulty = this.difficulty;
+    await newBlock.mineBlock(newBlock.difficulty);
     this.chain.push(newBlock);
   }
 
   /**
-   * Validates the integrity of the blockchain.
-   * @returns True if the chain is valid, false otherwise.
+   * Validates the blockchain’s integrity.
    */
   public isChainValid(): boolean {
     for (let i = 1; i < this.chain.length; i++) {

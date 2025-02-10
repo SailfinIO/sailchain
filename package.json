@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@ethereumjs/wallet": "^2.0.4",
     "@nestjs/axios": "^4.0.0",
     "@nestjs/common": "^11.0.8",
     "@nestjs/config": "^4.0.0",
@@ -28,13 +29,21 @@
     "@nestjs/platform-express": "^11.0.8",
     "@nestjs/schedule": "^5.0.1",
     "@nestjs/swagger": "^11.0.3",
+    "@nestjs/throttler": "^6.4.0",
     "@nestjs/websockets": "^11.0.8",
+    "bip32": "^5.0.0-rc.0",
+    "bip39": "^3.1.0",
     "elliptic": "^6.6.1",
+    "ethereumjs-util": "^7.1.5",
+    "ethereumjs-wallet": "^1.0.2",
+    "install": "^0.13.0",
     "mongoose": "^8.10.0",
+    "npm": "^11.1.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "tiny-secp256k1": "^2.2.3"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.2",

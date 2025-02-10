@@ -6,11 +6,21 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from './modules/config/config.module';
 import { ConfigService } from './modules/config/config.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     ConfigModule,
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          name: 'global',
+          limit: 20,
+          ttl: 60,
+        },
+      ],
+    }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

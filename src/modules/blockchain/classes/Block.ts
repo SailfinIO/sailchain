@@ -12,17 +12,20 @@ export class Block<T> {
   public previousHash: string;
   public hash: string;
   private nonce: number;
+  public difficulty: number;
 
   constructor(
     index: number,
     timestamp: number,
     transactions: Transaction[],
     previousHash: string = '',
+    difficulty: number, // add difficulty parameter
   ) {
     this.index = index;
     this.timestamp = timestamp;
     this.transactions = transactions;
     this.previousHash = previousHash;
+    this.difficulty = difficulty;
     this.nonce = 0;
     this.hash = this.calculateHash();
   }

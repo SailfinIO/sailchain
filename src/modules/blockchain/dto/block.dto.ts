@@ -30,4 +30,10 @@ export class BlockDto {
     example: '0000def456',
   })
   hash: string;
+
+  @ApiProperty({
+    description: 'Nonce value used to mine the block',
+    example: 12345,
+  })
+  difficulty: number;
 }

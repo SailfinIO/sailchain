@@ -1,6 +1,6 @@
 // src/modules/nodes/nodes.controller.ts
-
 import { Controller, Post, Get, Delete, Body, HttpCode } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { NodesService } from './nodes.service';
 import { CreateNodeDto } from './dto/create-node.dto';
@@ -12,7 +12,11 @@ export class NodesController {
 
   /**
    * Register a new node.
+   * Limit to 5 requests per minute.
    */
+  @Throttle({
+    default: { limit: 5, ttl: 60 },
+  })
   @Post()
   @ApiOperation({ summary: 'Register a new node' })
   @ApiResponse({ status: 201, description: 'Node registered successfully.' })
@@ -27,13 +31,16 @@ export class NodesController {
 
   /**
    * Retrieve all registered nodes.
+   * Allow up to 20 requests per minute.
    */
+  @Throttle({
+    default: { limit: 20, ttl: 60 },
+  })
   @Get()
   @ApiOperation({ summary: 'Retrieve all registered nodes' })
   @ApiResponse({
     status: 200,
     description: 'List of registered nodes',
-    // The response is simply an array of strings (node URLs)
     type: [String],
   })
   getNodes() {
@@ -42,8 +49,11 @@ export class NodesController {
 
   /**
    * Remove a registered node.
-   * Note: We use a DELETE request with a body containing the nodeUrl.
+   * Limit to 5 requests per minute.
    */
+  @Throttle({
+    default: { limit: 5, ttl: 60 },
+  })
   @Delete()
   @HttpCode(204)
   @ApiOperation({ summary: 'Remove a registered node' })
